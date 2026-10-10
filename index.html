@@ -3,50 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto JX Pro - Secure Payment</title>
+    <title>Nura Auto Clicker - Secure Payment</title>
     <!-- Razorpay Checkout Script -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         body {
-            background-color: #121212;
+            background-color: #0d121f;
             color: #ffffff;
             font-family: sans-serif;
             text-align: center;
-            padding-top: 50px;
+            padding-top: 40px;
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+        .card {
+            background: #151d30;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            margin: 0 auto;
         }
         .btn {
-            padding: 15px 35px;
-            background: #00C853;
-            color: white;
+            padding: 14px 28px;
+            background: #10b981;
+            color: #030712;
             border: none;
             font-size: 16px;
-            border-radius: 5px;
+            border-radius: 12px;
             font-weight: bold;
             cursor: pointer;
+            width: 100%;
             margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h2 id="planTitle">Auto JX Pro - Premium Activation</h2>
-    <p id="planDesc">UPI Payment (GPay, PhonePe, Paytm)</p>
-    
-    <button class="btn" id="payBtn" onclick="payNow()">Pay Now</button>
+    <div class="card">
+        <h2 id="planTitle" style="color: #10f59b; margin-bottom: 8px;">Nura Auto Clicker</h2>
+        <p id="planDesc" style="color: #94a3b8; font-size: 13px; margin-bottom: 20px;">Secure UPI Payment (GPay, PhonePe, Paytm)</p>
+        
+        <button class="btn" id="payBtn" onclick="payNow()">Pay Now</button>
+    </div>
 
     <script>
-        // URL-ல் இருந்து User ID, Plan, Amount மற்றும் Days-ஐ பெற்றுக்கொள்ளுதல்
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('userid') || 'guest_user';
         const planName = urlParams.get('plan') || '1 Day Test';
         const amountRs = parseInt(urlParams.get('amount')) || 1;
         const planDays = parseInt(urlParams.get('days')) || 1;
 
-        // UI-ல் தொகையை மாற்றுதல்
-        document.getElementById('planTitle').innerText = "Auto JX Pro - " + planName;
+        document.getElementById('planTitle').innerText = "Nura Auto Clicker - " + planName;
         document.getElementById('planDesc').innerText = "₹" + amountRs + " UPI Payment (GPay, PhonePe, Paytm)";
         document.getElementById('payBtn').innerText = "Pay ₹" + amountRs + " Now";
 
-        // உங்களது ஃபைர்பேஸ் Realtime Database URL
         const FIREBASE_URL = "https://nuraautoclicker-default-rtdb.firebaseio.com";
 
         function getFirebaseEmailKey(email) {
@@ -55,20 +65,19 @@
         }
 
         function payNow() {
-            var amountInPaise = amountRs * 100; // ரூபாயை பைசாவாக மாற்றுதல்
+            var amountInPaise = amountRs * 100;
 
             var options = {
-                "key": "rzp_live_TkCzwpVw5zuPVu", // உங்களது லைவ் கீ
+                "key": "rzp_live_TkCzwpVw5zuPVu",
                 "amount": amountInPaise, 
                 "currency": "INR",
-                "name": "Auto JX Pro",
+                "name": "Nura Auto Clicker",
                 "description": planName + " - User: " + userId,
                 "handler": function (response){
-                    alert("Payment Successful! Processing activation...");
                     updateFirebaseActivation(response.razorpay_payment_id);
                 },
                 "theme": {
-                    "color": "#00C853"
+                    "color": "#10b981"
                 }
             };
             var rzp = new Razorpay(options);
@@ -100,7 +109,6 @@
                 allowPrice: true
             };
 
-            // Firebase-க்கு நேரடியாக PATCH ரெக்வெஸ்ட் அனுப்புதல்
             fetch(FIREBASE_URL + "/users/" + emailKey + ".json", {
                 method: "PATCH",
                 headers: {
@@ -110,7 +118,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert("🎉 Premium Activated Successfully! You can now return to the app.");
+                alert("🎉 Payment Successful & Account Approved!\n\nKindly return to the Nura Auto Clicker app, and tap 'CHECK APPROVAL STATUS' to enter.");
             })
             .catch(err => {
                 alert("Payment saved, but Firebase sync error: " + err);
