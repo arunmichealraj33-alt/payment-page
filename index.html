@@ -28,29 +28,44 @@
     </style>
 </head>
 <body>
-    <h2>Auto JX Pro - Premium Activation</h2>
-    <p>₹1 UPI Payment (GPay, PhonePe, Paytm)</p>
+    <h2 id="planTitle">Auto JX Pro - Premium Activation</h2>
+    <p id="planDesc">UPI Payment (GPay, PhonePe, Paytm)</p>
     
-    <button class="btn" onclick="payNow()">Pay ₹1 Now</button>
+    <button class="btn" id="payBtn" onclick="payNow()">Pay Now</button>
 
     <script>
-        // URL-ல் இருந்து User ID-ஐ பெற்றுக்கொள்ளும் வசதி
+        // URL-ல் இருந்து User ID, Plan, Amount மற்றும் Days-ஐ பெற்றுக்கொள்ளுதல்
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('userid') || 'guest_user';
+        const planName = urlParams.get('plan') || '1 Day Test';
+        const amountRs = parseInt(urlParams.get('amount')) || 1;
+        const planDays = parseInt(urlParams.get('days')) || 1;
+
+        // UI-ல் தொகையை மாற்றுதல்
+        document.getElementById('planTitle').innerText = "Auto JX Pro - " + planName;
+        document.getElementById('planDesc').innerText = "₹" + amountRs + " UPI Payment (GPay, PhonePe, Paytm)";
+        document.getElementById('payBtn').innerText = "Pay ₹" + amountRs + " Now";
+
+        // உங்களது ஃபைர்பேஸ் Realtime Database URL
+        const FIREBASE_URL = "https://nuraautoclicker-default-rtdb.firebaseio.com";
+
+        function getFirebaseEmailKey(email) {
+            if (!email) return "";
+            return email.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+        }
 
         function payNow() {
+            var amountInPaise = amountRs * 100; // ரூபாயை பைசாவாக மாற்றுதல்
+
             var options = {
                 "key": "rzp_live_TkCzwpVw5zuPVu", // உங்களது லைவ் கீ
-                "amount": "100", // ₹1 (100 Paisa)
+                "amount": amountInPaise, 
                 "currency": "INR",
                 "name": "Auto JX Pro",
-                "description": "User ID: " + userId,
+                "description": planName + " - User: " + userId,
                 "handler": function (response){
-                    alert("Payment Successful! Payment ID: " + response.razorpay_payment_id);
-                    
-                    if(window.AutoJS) {
-                        window.AutoJS.onPaymentSuccess(response.razorpay_payment_id);
-                    }
+                    alert("Payment Successful! Processing activation...");
+                    updateFirebaseActivation(response.razorpay_payment_id);
                 },
                 "theme": {
                     "color": "#00C853"
@@ -58,6 +73,48 @@
             };
             var rzp = new Razorpay(options);
             rzp.open();
+        }
+
+        function updateFirebaseActivation(paymentId) {
+            var emailKey = getFirebaseEmailKey(userId);
+            if (!emailKey || emailKey === 'guest_user') {
+                alert("Error: Invalid User ID!");
+                return;
+            }
+
+            var nowMs = Date.now();
+            var expiryMs = nowMs + (planDays * 24 * 60 * 60 * 1000);
+
+            var activationData = {
+                status: "APPROVED",
+                approved: true,
+                isApproved: true,
+                plan: planName,
+                planAmount: amountRs,
+                planDays: planDays,
+                expiryDate: expiryMs,
+                subscriptionStartedAt: nowMs,
+                razorpayPaymentId: paymentId,
+                paymentStatus: "CAPTURED",
+                allowArea: true,
+                allowPrice: true
+            };
+
+            // Firebase-க்கு நேரடியாக PATCH ரெக்வெஸ்ட் அனுப்புதல்
+            fetch(FIREBASE_URL + "/users/" + emailKey + ".json", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(activationData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("🎉 Premium Activated Successfully! You can now return to the app.");
+            })
+            .catch(err => {
+                alert("Payment saved, but Firebase sync error: " + err);
+            });
         }
     </script>
 </body>
