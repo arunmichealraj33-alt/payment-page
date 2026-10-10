@@ -7,43 +7,102 @@
     <!-- Razorpay Checkout Script -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body {
-            background-color: #0d121f;
+            background: linear-gradient(135deg, #0d121f, #090d16);
             color: #ffffff;
-            font-family: sans-serif;
-            text-align: center;
-            padding-top: 40px;
-            padding-left: 16px;
-            padding-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 16px;
         }
         .card {
-            background: #151d30;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
+            background: linear-gradient(145deg, #151d30, #10172a);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 24px;
             padding: 24px;
+            width: 100%;
             max-width: 400px;
-            margin: 0 auto;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+            text-align: center;
         }
-        .btn {
-            padding: 14px 28px;
-            background: #10b981;
+        .logo-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            background: rgba(16, 185, 129, 0.15);
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            border: 2px solid #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+        h2 { color: #f8fafc; font-size: 20px; font-weight: 900; margin-bottom: 6px; }
+        .price-badge {
+            background: rgba(16, 245, 155, 0.1);
+            color: #10f59b;
+            border: 1px solid #10f59b;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 12px 0 20px;
+        }
+        .desc { color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+        .btn-pay {
+            background: linear-gradient(135deg, #10b981, #059669);
             color: #030712;
             border: none;
             font-size: 16px;
-            border-radius: 12px;
-            font-weight: bold;
+            border-radius: 14px;
+            font-weight: 900;
             cursor: pointer;
             width: 100%;
-            margin-top: 20px;
+            padding: 16px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            transition: transform 0.2s;
+        }
+        .btn-pay:active { transform: scale(0.98); }
+        
+        /* Custom Beautiful Modal (Replaces Browser Alert) */
+        #customModal {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
+            display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 9999;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #customModal.show { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            background: #151d30; border: 2px solid #10b981; border-radius: 20px; padding: 22px; max-width: 340px; width: 100%; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8); animation: popUp 0.3s ease;
+        }
+        @keyframes popUp { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+        .modal-btn {
+            background: #10b981; color: #030712; border: none; padding: 12px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 14px; margin-top: 16px; cursor: pointer;
         }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2 id="planTitle" style="color: #10f59b; margin-bottom: 8px;">Nura Auto Clicker</h2>
-        <p id="planDesc" style="color: #94a3b8; font-size: 13px; margin-bottom: 20px;">Secure UPI Payment (GPay, PhonePe, Paytm)</p>
-        
-        <button class="btn" id="payBtn" onclick="payNow()">Pay Now</button>
+        <div class="logo-icon">⚡</div>
+        <h2 id="planTitle">Nura Auto Clicker</h2>
+        <div id="priceBadge" class="price-badge">₹1 UPI Payment</div>
+        <p class="desc">GPay, PhonePe & Paytm வழியாகப் பாதுகாப்பாகப் பணம் செலுத்துங்கள்.</p>
+        <button class="btn-pay" id="payBtn" onclick="payNow()">Pay Now</button>
+    </div>
+
+    <!-- Custom Success Popup (No Domain Name Displayed) -->
+    <div id="customModal">
+        <div class="modal-card">
+            <div style="font-size: 36px; margin-bottom: 8px;">🎉</div>
+            <h3 style="color: #10f59b; font-size: 18px; font-weight: bold; margin-bottom: 8px;">Payment Successful!</h3>
+            <p id="modalMsg" style="color: #cbd5e1; font-size: 12px; line-height: 1.6; margin-bottom: 4px;"></p>
+            <button class="modal-btn" onclick="closeModalAndExit()">OK, RETURN TO APP</button>
+        </div>
     </div>
 
     <script>
@@ -53,8 +112,8 @@
         const amountRs = parseInt(urlParams.get('amount')) || 1;
         const planDays = parseInt(urlParams.get('days')) || 1;
 
-        document.getElementById('planTitle').innerText = "Nura Auto Clicker - " + planName;
-        document.getElementById('planDesc').innerText = "₹" + amountRs + " UPI Payment (GPay, PhonePe, Paytm)";
+        document.getElementById('planTitle').innerText = planName;
+        document.getElementById('priceBadge').innerText = "₹" + amountRs + " UPI Payment (GPay, PhonePe, Paytm)";
         document.getElementById('payBtn').innerText = "Pay ₹" + amountRs + " Now";
 
         const FIREBASE_URL = "https://nuraautoclicker-default-rtdb.firebaseio.com";
@@ -87,7 +146,7 @@
         function updateFirebaseActivation(paymentId) {
             var emailKey = getFirebaseEmailKey(userId);
             if (!emailKey || emailKey === 'guest_user') {
-                alert("Error: Invalid User ID!");
+                showModal("Error: Invalid User ID!");
                 return;
             }
 
@@ -111,18 +170,25 @@
 
             fetch(FIREBASE_URL + "/users/" + emailKey + ".json", {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(activationData)
             })
             .then(res => res.json())
             .then(data => {
-                alert("🎉 Payment Successful & Account Approved!\n\nKindly return to the Nura Auto Clicker app, and tap 'CHECK APPROVAL STATUS' to enter.");
+                showModal("உங்கள் கணக்கு வெற்றிகரமாக இயக்கப்பட்டுவிட்டது!\n\nஇப்போது Nura Auto Clicker ஆப்பிற்குத் திரும்பி, 'CHECK APPROVAL STATUS' பட்டனை அழுத்தவும்.");
             })
             .catch(err => {
-                alert("Payment saved, but Firebase sync error: " + err);
+                showModal("Payment saved, but Firebase sync error: " + err);
             });
+        }
+
+        function showModal(msg) {
+            document.getElementById('modalMsg').innerText = msg;
+            document.getElementById('customModal').classList.add('show');
+        }
+
+        function closeModalAndExit() {
+            document.getElementById('customModal').classList.remove('show');
         }
     </script>
 </body>
